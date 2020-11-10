@@ -6,10 +6,10 @@
 #include <time.h>
 #include <curand_kernel.h>
 #include <curand.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 
 #define SEED     921
-#define NUM_ITER 10000000 // Iterations per thread
+#define NUM_ITER 1000000 //Iterations per thread
 #define NUM_BLOCKS 1024
 #define TPB 128
 
@@ -41,7 +41,7 @@ __global__ void calculatePi(curandState *dev_random, unsigned long long *totals)
 
 
 int main(int argc, char* argv[]) {
-    struct timeval start, end;
+    //struct timeval start, end;
     curandState *dev_random;
     unsigned long long *totals, *d_totals;
     unsigned long long NumThreads = (unsigned long long) (NUM_BLOCKS * TPB);
@@ -50,9 +50,9 @@ int main(int argc, char* argv[]) {
     cudaMalloc(&d_totals, NUM_BLOCKS * sizeof(unsigned long long));
     totals = (unsigned long long*)malloc(NUM_BLOCKS * sizeof(unsigned long long));
     
-    gettimeofday(&start, NULL);
+    //gettimeofday(&start, NULL);
     calculatePi<<<NUM_BLOCKS, TPB>>>(dev_random, d_totals);
-    gettimeofday(&end, NULL);
+    //gettimeofday(&end, NULL);
 
     cudaMemcpy(totals, d_totals, NUM_BLOCKS * sizeof(unsigned long long), cudaMemcpyDeviceToHost);
 
@@ -61,12 +61,14 @@ int main(int argc, char* argv[]) {
         count += totals[i];
     }
     double pi = ((double) count / (double)(NumThreads * NumIter)) * 4.0;
+    printf("%f \n", pi);
+    /*
     printf(
         "The result is %.15f after %ld samples in %ld microseconds!\n",
         pi,
         (long int)(NumThreads * NumIter),
         ((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)));
-
+    */
     cudaFree(dev_random);
     cudaFree(d_totals);
     cudaFree(totals);

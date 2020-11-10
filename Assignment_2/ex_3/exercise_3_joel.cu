@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 #define NUM_PARTICLES 10000 // Third argument
 #define NUM_ITERATIONS 100 // Second argument
 #define BLOCK_SIZE 16 // First argument
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]){
         numIterations = atoi(argv[2]);
         blockSize = atoi(argv[1]);
     }
-    struct timeval start, end;
+    //struct timeval start, end;
 
     Particle *particles = (Particle*)malloc(numParticles * sizeof(Particle));
     Particle *particles_GPU = (Particle*)malloc(numParticles * sizeof(Particle));
@@ -70,19 +70,19 @@ int main(int argc, char *argv[]){
     cudaMalloc(&d_particles, numParticles * sizeof(Particle));
     cudaMemcpy(d_particles, particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
 
-    gettimeofday(&start, NULL);
+    //gettimeofday(&start, NULL);
     for (int t = 0; t < numIterations; ++t){
         timeStepCPU(particles, t);
     }
-    gettimeofday(&end, NULL);
-    printf("Computing %d iterations on the CPU... Done in %ld microseconds!\n", numIterations, ((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)));
+    //gettimeofday(&end, NULL);
+    //printf("Computing %d iterations on the CPU... Done in %ld microseconds!\n", numIterations, ((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)));
     
-    gettimeofday(&start, NULL);
+    //gettimeofday(&start, NULL);
     for (int t = 0; t < numIterations; ++t){
         timeStep<<<blockSize, numParticles / blockSize + 1>>>(d_particles, t);
     }
-    gettimeofday(&end, NULL);
-    printf("Computing %d iterations on the GPU... Done in %ld microseconds!\n", numIterations, ((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)));
+    //gettimeofday(&end, NULL);
+    //printf("Computing %d iterations on the GPU... Done in %ld microseconds!\n", numIterations, ((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)));
     cudaMemcpy(particles_GPU, d_particles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
 
     int sameArray = 1;

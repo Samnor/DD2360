@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <math.h>
-// Kernel function to add the elements of two arrays
+
 __global__
 void add(int n, float *x, float *y)
 {
@@ -13,7 +13,7 @@ void add(int n, float *x, float *y)
 
 int main(void)
 {
-  int ARRAY_SIZE = 1<<20;
+  int ARRAY_SIZE = 1000000;
   float *x, *y;
 
   // Allocate Unified Memory – accessible from CPU or GPU
