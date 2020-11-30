@@ -21,7 +21,7 @@ GEMM in CUDA with shared memory compared to cuBLAS.
 
 ## Assignment IV: OpenCL
 ### [Exercise 1](Assignment_4/ex_1)
-Simple Hello Worl in OpenCL.
+Simple Hello World in OpenCL.
 ### [Exercise 2](Assignment_4/ex_2)
 Performing SAXPY on the GPU using OpenCL.
 ### Bonus
