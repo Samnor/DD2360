@@ -8,6 +8,8 @@
 #define BLOCK_SIZE 256 //128 //256
 #define NUM_DIMENSIONS 3
 
+enum allocation_style{Pageable, Pinned, Managed};
+
 typedef struct Particle {
     float3 position;
     float3 velocity;
@@ -69,69 +71,85 @@ void timestep_cpu(Particle *particles, int n, float *iter_randoms, int iter){
     }
 }
 
-void init_random(Particle *particles, Particle *cpu_particles, int i){
-    particles[i].position.x = (rand() % 10)/10.0 - 0.5;
+void init_random(Particle *cpu_particles, int i){
+    cpu_particles[i].position.x = (rand() % 10)/10.0 - 0.5;
     //printf("%f %f %f\n", particles[i].position.x, particles[i].position.y, particles[i].position.z);
-    particles[i].position.y = (rand() % 10)/10.0 - 0.5;
-    particles[i].position.z = (rand() % 10)/10.0 - 0.5;
-    cpu_particles[i].position.x = particles[i].position.x;
-    //printf("%f %f %f\n", particles[i].position.x, particles[i].position.y, particles[i].position.z);
-    cpu_particles[i].position.y = particles[i].position.y;
-    cpu_particles[i].position.z = particles[i].position.z;
+    cpu_particles[i].position.y = (rand() % 10)/10.0 - 0.5;
+    cpu_particles[i].position.z = (rand() % 10)/10.0 - 0.5;
 }
 
 int main(){
+    /*
+    Modify the program, such that
+    All particles are copied to the GPU at the beginning of a time step.
+    All the particles are copied back to the host after the kernel completes, before proceeding to the next time step.
+    */
+    enum allocation_style allocation_style;
+    allocation_style = Managed;
+    printf("start of main()\n");
     wmain();
     srand(1337);
-    //bool useGPU = true;
-    Particle *particles;
+    // Initiate data structures
     Particle *cpu_particles;
+    //Particle *gpu_particles;
+    //cpu_particles = (Particle *)calloc(NUM_PARTICLES, sizeof(Particle));
+    //cudaMallocHost(&cpu_particles, NUM_PARTICLES*sizeof(Particle));
+
+    if(allocation_style == Managed){
+        cudaMallocManaged(&cpu_particles, NUM_PARTICLES*sizeof(Particle));
+    }
+
+    //cudaMalloc((void **) &gpu_particles, NUM_PARTICLES*sizeof(Particle));
+    //if(USE_PINNED_MEMORY){
+    //    cudaHostAlloc((void **) &cpu_particles, NUM_PARTICLES*sizeof(Particle), cudaHostAllocDefault);
+    //} else {
+    //    cpu_particles = (Particle *)calloc(NUM_PARTICLES, sizeof(Particle));
+    //}
+    
+    // Initiate random data on GPU
     float *iter_randoms;
-    cudaMallocManaged(&iter_randoms, NUM_DIMENSIONS*NUM_ITERATIONS*sizeof(float));
+    //float *gpu_iter_randoms;
+    if(allocation_style == Managed){
+        cudaMallocManaged(&iter_randoms, NUM_DIMENSIONS*NUM_ITERATIONS*sizeof(float));
+    }
+    //iter_randoms = (float *)calloc(NUM_DIMENSIONS*NUM_ITERATIONS, sizeof(float));
+    //cudaMalloc(&iter_randoms, NUM_PARTICLES*sizeof(float));
     for(int i = 0; i < NUM_DIMENSIONS*NUM_ITERATIONS; i++){
         iter_randoms[i] = (rand() % 10)/10.0 - 0.5;
     }
-    cudaMallocManaged(&particles, NUM_PARTICLES*sizeof(Particle));
-    cudaMallocManaged(&cpu_particles, NUM_PARTICLES*sizeof(Particle));
     for(int i = 0; i < NUM_PARTICLES; i++){
-        init_random(particles, cpu_particles, i);
+        init_random(cpu_particles, i);
     }
+    //cudaMalloc(&gpu_iter_randoms, NUM_DIMENSIONS*NUM_ITERATIONS * sizeof(Particle));
     printf("Before GPU\n");
     wmain();
     int numBlocks = (NUM_PARTICLES + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    for(int iter = 0; iter < NUM_ITERATIONS; iter++){
-        //printf("iter %d", iter);
-        timestep<<<numBlocks, BLOCK_SIZE>>>(particles, NUM_PARTICLES, iter_randoms, iter);
+    // Run timesteps
+    for(int t = 0; t < NUM_ITERATIONS; t++){
+        //cudaMemcpy(gpu_particles, cpu_particles, NUM_PARTICLES * sizeof(Particle), cudaMemcpyHostToDevice);
+        printf("t %d\n", t);
+        //timestep<<<numBlocks, BLOCK_SIZE>>>(gpu_particles, NUM_PARTICLES, gpu_iter_randoms, t);
+        timestep<<<numBlocks, BLOCK_SIZE>>>(cpu_particles, NUM_PARTICLES, iter_randoms, t);
+        //cudaMemcpy(cpu_particles, gpu_particles, NUM_PARTICLES * sizeof(Particle), cudaMemcpyDeviceToHost);
         cudaDeviceSynchronize();
     }
+    cudaDeviceSynchronize();
     printf("After GPU\n");
     wmain();
+
+    //cudaFree(gpu_particles);
+    //cudaFree(gpu_iter_randoms);
     /*
-    printf("Before CPU\n");
-    wmain();
-    //cudaDeviceSynchronize();
-    for(int iter = 0; iter < NUM_ITERATIONS; iter++)
-        timestep_cpu(cpu_particles, NUM_PARTICLES, iter_randoms, iter);
-    printf("After CPU\n");
-    wmain();
+    if(USE_PINNED_MEMORY){
+        cudaFree(cpu_particles);
+    } else {
+        free(cpu_particles);
+    }
     */
-    float total_error = 0.0f;
-    for(int i = 0; i < NUM_PARTICLES; i++){
-        total_error += distance3d(particles[i].position, cpu_particles[i].position);
-    }
-    
-    printf("total_error %f\n", total_error);
-    for(int i = NUM_PARTICLES-5; i < NUM_PARTICLES; i++){
-        printf("%f %f %f\n", particles[i].position.x, particles[i].position.y, particles[i].position.z);
-        printf("%f %f %f\n", particles[i].velocity.x, particles[i].velocity.y, particles[i].velocity.z);
-    }
-    printf("\n");
-    for(int i = NUM_PARTICLES-5; i < NUM_PARTICLES; i++){
-        printf("%f %f %f\n", cpu_particles[i].position.x, cpu_particles[i].position.y, cpu_particles[i].position.z);
-        printf("%f %f %f\n", cpu_particles[i].velocity.x, cpu_particles[i].velocity.y, cpu_particles[i].velocity.z);
-    }
+    cudaFree(cpu_particles);
     cudaFree(iter_randoms);
-    cudaFree(particles);
-    wmain();
+    //free(iter_randoms);
+    cudaDeviceSynchronize();
+    printf("end of program\n");
     return 0;
 }
