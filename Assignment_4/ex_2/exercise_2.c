@@ -22,9 +22,7 @@ const char *mykernel =
     "    if (index < 1000000000) {                                                   \n"
     "       y[index] = a * x[index] + y[index];                                      \n"
     "    }                                                                           \n"
-    "}                                                                               \n"
-    ""; //TODO: Write your kernel here
-
+    "}                                                                               \n";
 
 int main(int argc, char *argv) {
     float *y = (float*)malloc(ARRAY_SIZE * sizeof(float));

@@ -17,9 +17,7 @@ const char *mykernel =
     "    int idy = get_group_id(1) * get_local_size(1) + get_local_id(1);           \n"
     "    int idz = get_global_id(2);                                                \n"
     "    printf(\"Hello World! My threadId is (%d, %d, %d)\\n\", idx, idy, idz);    \n"
-    "}                                                                              \n"
-    ""; //TODO: Write your kernel here
-
+    "}                                                                              \n";
 
 int main(int argc, char *argv) {
   cl_platform_id * platforms; cl_uint     n_platform;
