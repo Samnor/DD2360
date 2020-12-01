@@ -24,5 +24,5 @@ GEMM in CUDA with shared memory compared to cuBLAS.
 Simple Hello World in OpenCL.
 ### [Exercise 2](Assignment_4/ex_2)
 Performing SAXPY on the GPU using OpenCL.
-### Bonus
-TBC
+### [Bonus](Assignment_4/ex_bonus)
+OpenCL Particle Simulations 
