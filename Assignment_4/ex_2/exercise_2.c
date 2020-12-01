@@ -97,8 +97,8 @@ int main(int argc, char *argv) {
     err = clSetKernelArg(kernel, 2, sizeof(a), (void *) &a);CHK_ERROR(err);
 
     // Invoke the kernel
-    size_t n_workitem = ARRAY_SIZE;
-    size_t workgroup_size = 100;
+    size_t n_workitem = 256 * ((ARRAY_SIZE + 255) / 256);
+    size_t workgroup_size = 256;
 
     // Launch the kernel
     err = clEnqueueNDRangeKernel(cmd_queue, kernel, 1, NULL, &n_workitem, &workgroup_size, 0, NULL, NULL);CHK_ERROR(err);
